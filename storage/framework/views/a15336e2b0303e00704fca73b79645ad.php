@@ -1,9 +1,9 @@
-@extends('layouts.admin')
 
-@section('title', 'Keranjang Belanja')
-@section('content-header', 'Keranjang Belanja')
 
-@section('css')
+<?php $__env->startSection('title', 'Keranjang Belanja'); ?>
+<?php $__env->startSection('content-header', 'Keranjang Belanja'); ?>
+
+<?php $__env->startSection('css'); ?>
 <style>
     .cart-container {
         background: #fff;
@@ -62,10 +62,10 @@
         font-weight: 600;
     }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
-<meta name="csrf-token" content="{{ csrf_token() }}">
+<?php $__env->startSection('content'); ?>
+<meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
 <div class="cart-container">
     <div class="cart-header">
         <h4 class="mb-0">
@@ -120,9 +120,9 @@
         </div>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('js')
+<?php $__env->startSection('js'); ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Focus on barcode input
@@ -340,4 +340,6 @@ function updateCartDisplay(cart) {
     cartTotal.textContent = `Rp ${cart.total.toLocaleString()}`;
 }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\laragon\www\pos-capstone\resources\views/cart/index.blade.php ENDPATH**/ ?>

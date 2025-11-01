@@ -10,10 +10,10 @@ class Purchase extends Component {
         this.state = {
             cart: [],
             products: [],
-            customers: [],
             barcode: "",
+            products: [],
             search: "",
-            customer_id: "",
+            customer_name: "",
             translations: {},
         };
 
@@ -26,7 +26,7 @@ class Purchase extends Component {
         this.loadProducts = this.loadProducts.bind(this);
         this.handleChangeSearch = this.handleChangeSearch.bind(this);
         this.handleSeach = this.handleSeach.bind(this);
-        this.setCustomerId = this.setCustomerId.bind(this);
+        this.setCustomerName = this.setCustomerName.bind(this);
         this.handleClickSubmit = this.handleClickSubmit.bind(this);
         this.loadTranslations = this.loadTranslations.bind(this);
     }
@@ -36,7 +36,6 @@ class Purchase extends Component {
         this.loadTranslations();
         this.loadCart();
         this.loadProducts();
-        this.loadCustomers();
     }
 
     // load the transaltions for the react component
@@ -52,12 +51,7 @@ class Purchase extends Component {
             });
     }
 
-    loadCustomers() {
-        axios.get(`/admin/customers`).then((res) => {
-            const customers = res.data;
-            this.setState({ customers });
-        });
-    }
+    
 
     loadProducts(search = "") {
         const query = !!search ? `?search=${search}` : "";
@@ -186,8 +180,8 @@ class Purchase extends Component {
         }
     }
 
-    setCustomerId(event) {
-        this.setState({ customer_id: event.target.value });
+    setCustomerName(event) {
+        this.setState({ customer_name: event.target.value });
     }
     handleClickSubmit() {
         Swal.fire({
@@ -201,7 +195,7 @@ class Purchase extends Component {
             preConfirm: (amount) => {
                 return axios
                     .post("/admin/orders", {
-                        customer_id: this.state.customer_id,
+                        customer_name: this.state.customer_name,
                         amount,
                     })
                     .then((res) => {
@@ -220,7 +214,7 @@ class Purchase extends Component {
         });
     }
     render() {
-        const { cart, products, customers, barcode, translations } = this.state;
+    const { cart, products, barcode, customer_name, translations } = this.state;
         return (
             <div className="row">
                 <div className="col-md-6 col-lg-4">
@@ -237,20 +231,13 @@ class Purchase extends Component {
                             </form>
                         </div>
                         <div className="col">
-                            <select
+                            <input
+                                type="text"
                                 className="form-control"
-                                onChange={this.setCustomerId}
-                            >
-                                <option value="">
-                                    {translations["general_customer"]}
-                                </option>
-                                {customers.map((cus) => (
-                                    <option
-                                        key={cus.id}
-                                        value={cus.id}
-                                    >{`${cus.first_name} ${cus.last_name}`}</option>
-                                ))}
-                            </select>
+                                placeholder={translations["general_customer"]}
+                                value={customer_name}
+                                onChange={this.setCustomerName}
+                            />
                         </div>
                     </div>
                     <div className="user-cart">

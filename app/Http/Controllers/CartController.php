@@ -74,16 +74,39 @@ class CartController extends Controller
         ]);
     }
 
-    public function delete(Request $request)
-    {
-        $request->validate([
-            'product_id' => 'required|integer|exists:products,id'
+    public function remove(Request $request)
+{
+    try {
+        $productId = $request->input('product_id');
+
+        // Misal kamu simpan keranjang di session:
+        $cart = session()->get('cart', []);
+
+        if (isset($cart[$productId])) {
+            unset($cart[$productId]);
+            session()->put('cart', $cart);
+        }
+
+        // Hitung ulang total
+        $total = 0;
+        foreach ($cart as $item) {
+            $total += $item['price'] * $item['quantity'];
+        }
+
+        return response()->json([
+            'success' => true,
+            'cart' => [
+                'items' => array_values($cart),
+                'total' => $total
+            ]
         ]);
-        $request->user()->cart()->detach($request->product_id);
-
-        return response('', 204);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Terjadi kesalahan saat menghapus item.'
+        ], 500);
     }
-
+}
     public function empty(Request $request)
     {
         $request->user()->cart()->detach();

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Order extends Model
 {
     protected $fillable = [
-        'customer_id',
+        'customer_name',
         'user_id'
     ];
 
@@ -21,17 +21,9 @@ class Order extends Model
         return $this->hasMany(Payment::class);
     }
 
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class);
-    }
-
     public function getCustomerName()
     {
-        if ($this->customer) {
-            return $this->customer->first_name . ' ' . $this->customer->last_name;
-        }
-        return __('customer.working');
+        return $this->customer_name ?: __('customer.working');
     }
 
     public function total()

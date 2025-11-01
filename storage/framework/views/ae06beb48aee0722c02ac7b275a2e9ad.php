@@ -27,7 +27,6 @@
                     ['route' => 'products.index', 'icon' => 'fas fa-box-open', 'label' => __('product.title')],
                     ['route' => 'cart.index', 'icon' => 'fas fa-cart-plus', 'label' => __('cart.title')],
                     ['route' => 'orders.index', 'icon' => 'fas fa-receipt', 'label' => __('order.title')],
-                    ['route' => 'customers.index', 'icon' => 'fas fa-users', 'label' => __('customer.title')],
                     ['route' => 'suppliers.index', 'icon' => 'fas fa-truck', 'label' => 'Suppliers'],
                     ['route' => 'settings.index', 'icon' => 'fas fa-cogs', 'label' => __('settings.title')],
                     ['route' => 'logout', 'icon' => 'fas fa-sign-out-alt', 'label' => __('common.Logout')],

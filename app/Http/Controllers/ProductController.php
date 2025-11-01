@@ -45,6 +45,49 @@ class ProductController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+    public function search(Request $request)
+    {
+        try {
+            $barcode = $request->query('barcode');
+            
+            if (empty($barcode)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Barcode tidak boleh kosong'
+                ], 400);
+            }
+
+            $product = Product::where('barcode', $barcode)
+                            ->where('status', 1)
+                            ->first();
+            
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Produk tidak ditemukan'
+                ], 404);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'product' => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'price' => (float) $product->price,
+                    'barcode' => $product->barcode,
+                    'quantity' => 1
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Product search error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mencari produk'
+            ], 500);
+        }
+    }
+
     public function store(ProductStoreRequest $request)
     {
         $image_path = '';

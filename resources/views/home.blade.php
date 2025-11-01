@@ -44,7 +44,7 @@ html, body {
             <div class="card-body text-center" style="padding:1.25rem;">
                 <h2 class="fw-bold">{{$customers_count}}</h2>
                 <p style="margin:0.5rem 0 1rem;">{{ __('dashboard.Customers_Count') }}</p>
-                <a href="{{ route('customers.index') }}" class="btn btn-light btn-sm" style="color:#ffc107; font-weight:600; border-radius:8px;">{{ __('common.More_info') }} <i class="fas fa-arrow-circle-right ml-1"></i></a>
+                <span class="btn btn-light btn-sm" style="color:#ffc107; font-weight:600; border-radius:8px;">{{ __('common.More_info') }} <i class="fas fa-arrow-circle-right ml-1"></i></span>
             </div>
         </div>
     </div>
