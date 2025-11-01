@@ -113,4 +113,72 @@ class CartController extends Controller
 
         return response('', 204);
     }
+
+    public function checkout(Request $request)
+{
+    try {
+        $cart = session('cart');
+
+        if (!$cart || empty($cart['items'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Keranjang kosong'
+            ], 400);
+        }
+
+        // VALIDASI CUSTOMER
+        if (!$request->customer_name) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nama customer wajib diisi'
+            ], 422);
+        }
+
+        // BUAT ORDER
+        $order = \App\Models\Order::create([
+            'customer_name' => $request->customer_name,
+            'total' => $cart['total'],
+            'status' => 'completed'
+        ]);
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membuat order'
+            ], 500);
+        }
+
+        // SIMPAN ITEM
+        foreach ($cart['items'] as $item) {
+
+            \App\Models\OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => $item['id'],
+                'price' => $item['price'],
+                'quantity' => $item['quantity'],
+                'total' => $item['price'] * $item['quantity']
+            ]);
+
+            // UPDATE STOK
+            \App\Models\Product::where('id', $item['id'])
+                ->decrement('quantity', $item['quantity']);
+        }
+
+        // HAPUS CART
+        session()->forget('cart');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pesanan berhasil disimpan',
+            'redirect_url' => route('orders.index')
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Checkout error: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
 }

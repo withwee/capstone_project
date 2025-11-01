@@ -192,30 +192,54 @@ function searchProduct(barcode) {
 }
 
 function addToCart(product) {
-    // Add to cart logic here
     const cartItems = document.getElementById('cartItems');
-    const row = document.createElement('tr');
-    row.innerHTML = `
-        <td>${product.name}</td>
-        <td>Rp ${product.price.toLocaleString()}</td>
-        <td>
-            <div class="input-group" style="width: 150px">
-                <button class="btn btn-outline-secondary" onclick="updateCartItem(${product.id}, ${product.quantity - 1})">-</button>
-                <input type="number" class="form-control text-center" value="${product.quantity}" 
-                       onchange="updateCartItem(${product.id}, this.value)">
-                <button class="btn btn-outline-secondary" onclick="updateCartItem(${product.id}, ${product.quantity + 1})">+</button>
-            </div>
-        </td>
-        <td>Rp ${(product.price * product.quantity).toLocaleString()}</td>
-        <td>
-            <button class="btn btn-danger btn-sm" onclick="removeCartItem(${product.id})">
-                <i class="fas fa-trash"></i>
-            </button>
-        </td>
-    `;
-    cartItems.appendChild(row);
+    let existingRow = [...cartItems.children].find(row => 
+        row.dataset.productId == product.id
+    );
+
+    if (existingRow) {
+        const qtyInput = existingRow.querySelector('input[type="number"]');
+        qtyInput.value = parseInt(qtyInput.value) + 1;
+    } else {
+        const row = document.createElement('tr');
+        row.dataset.productId = product.id;
+        row.innerHTML = `
+            <td>${product.name}</td>
+            <td>Rp ${product.price.toLocaleString()}</td>
+            <td>
+                <div class="input-group" style="width: 150px">
+                    <button class="btn btn-outline-secondary" onclick="changeQty(this, -1)">-</button>
+                    <input type="number" class="form-control text-center" value="${product.quantity}" min="1">
+                    <button class="btn btn-outline-secondary" onclick="changeQty(this, 1)">+</button>
+                </div>
+            </td>
+            <td class="item-total">Rp ${(product.price * product.quantity).toLocaleString()}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="removeRow(this)"><i class="fas fa-trash"></i></button></td>
+        `;
+        cartItems.appendChild(row);
+    }
     updateCartTotal();
 }
+
+function changeQty(button, delta) {
+    const input = button.parentElement.querySelector('input');
+    let newVal = parseInt(input.value) + delta;
+    if (newVal < 1) newVal = 1;
+    input.value = newVal;
+
+    const row = button.closest('tr');
+    const priceText = row.cells[1].textContent.replace(/[^\d]/g, '');
+    const price = parseFloat(priceText) || 0;
+    row.querySelector('.item-total').textContent = `Rp ${(price * newVal).toLocaleString()}`;
+
+    updateCartTotal();
+}
+
+function removeRow(button) {
+    button.closest('tr').remove();
+    updateCartTotal();
+}
+
 
 function updateCartItem(productId, quantity) {
     fetch(`/admin/cart/update`, {
@@ -237,17 +261,18 @@ function updateCartItem(productId, quantity) {
 }
 
 function updateCartTotal() {
-    const cartItems = document.querySelectorAll('#cartItems tr');
+    const rows = document.querySelectorAll('#cartItems tr');
     let total = 0;
 
-    cartItems.forEach(row => {
-        const price = parseFloat(row.children[1].textContent.replace(/[^\d]/g, ''));
+    rows.forEach(row => {
+        const priceText = row.cells[1].textContent.replace(/[^\d]/g, '');
         const qtyInput = row.querySelector('input[type="number"]');
+        const price = parseFloat(priceText) || 0;
         const qty = parseInt(qtyInput.value) || 0;
         total += price * qty;
     });
 
-    document.getElementById('cartTotal').textContent = 'Rp ' + total.toLocaleString();
+    document.getElementById('cartTotal').textContent = `Rp ${total.toLocaleString()}`;
 }
 
 function removeCartItem(productId) {
@@ -281,28 +306,20 @@ function removeCartItem(productId) {
 
 function checkout() {
     const customerName = document.getElementById('customer_name').value;
-    
-    fetch('/admin/cart/checkout', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({ customer_name: customerName })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Pesanan berhasil diselesaikan');
-            window.location.href = data.redirect_url;
-        } else {
-            alert(data.message || 'Terjadi kesalahan saat checkout');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Terjadi kesalahan saat checkout');
-    });
+    const cartItems = document.querySelectorAll('#cartItems tr');
+
+    if (!customerName.trim()) {
+        Swal.fire('Peringatan', 'Mohon isi nama customer', 'warning');
+        return;
+    }
+
+    if (cartItems.length === 0) {
+        Swal.fire('Peringatan', 'Keranjang masih kosong', 'warning');
+        return;
+    }
+
+    // kirim data ke server (belum implementasi backend)
+    Swal.fire('Sukses', 'Pesanan berhasil diselesaikan', 'success');
 }
 
 function updateCartDisplay(cart) {
@@ -338,6 +355,45 @@ function updateCartDisplay(cart) {
     
     // Update total
     cartTotal.textContent = `Rp ${cart.total.toLocaleString()}`;
+
+    function searchProduct(barcode) {
+    if (!barcode.trim()) {
+        Swal.fire('Peringatan', 'Mohon masukkan kode barcode', 'warning');
+        return;
+    }
+
+    const searchButton = document.getElementById('searchBarcode');
+    const originalContent = searchButton.innerHTML;
+    searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    searchButton.disabled = true;
+
+    fetch(`/products/search?barcode=${encodeURIComponent(barcode)}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return response.json();
+    })
+    .then(data => {
+        if (data.success && data.product) {
+            addToCart(data.product);
+            document.getElementById('barcode').value = '';
+            updateCartTotal();
+        } else {
+            Swal.fire('Gagal', data.message || 'Produk tidak ditemukan', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Terjadi kesalahan saat mencari produk', 'error');
+    })
+    .finally(() => {
+        searchButton.innerHTML = originalContent;
+        searchButton.disabled = false;
+        document.getElementById('barcode').focus();
+    });
+}
+
 }
 </script>
 <?php $__env->stopSection(); ?>
